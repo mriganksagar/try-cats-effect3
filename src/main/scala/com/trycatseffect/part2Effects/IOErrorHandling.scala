@@ -40,24 +40,23 @@ object IOErrorHandlingExercises {
   // 1. construct potentially failed IOs from standard data-types  (Option, Either, Try)
 
   def option2IO[A](op: Option[A])(ifEmpty: Throwable): IO[A] = op match
-    case Some(value) => IO(value)
+    case Some(value) => IO.pure(value)
     case None        => IO.raiseError(ifEmpty)
 
   def Try2IO[A](atry: Try[A]): IO[A] = atry match
-    case Success(value) => IO(value)
+    case Success(value) => IO.pure(value)
     case Failure(exc) => IO.raiseError(exc)
 
   def either2IO[A](anEither: Either[Throwable, A]): IO[A] = anEither match
     case Left(thr) => IO.raiseError(thr)
-    case Right(value) => IO(value) 
+    case Right(value) => IO.pure(value) 
   
 
   // 2. handleError and handleErrorWith, implementations
 
-  def handleError[A](io: IO[A])(handler: Throwable => A):IO[A] = ???
+  def handleError[A](io: IO[A])(handler: Throwable => A):IO[A] = io.redeem(handler, identity)
 
-  def handleErrorWith[A](io: IO[A])(handler: Throwable => IO[A]):IO[A] = ???
-
+  def handleErrorWith[A](io: IO[A])(handler: Throwable => IO[A]):IO[A] = io.redeemWith(handler, IO.pure)
 
   def main(args: Array[String]): Unit = {
 
