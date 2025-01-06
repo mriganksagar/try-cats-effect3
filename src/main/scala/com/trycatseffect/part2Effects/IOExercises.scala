@@ -23,6 +23,8 @@ object IOExercises {
   def forever_v2[A](io: IO[A]): IO[A] = io >> forever(io)
 
   // here in this version eager eval will cause stack overflow due to indefinite evaluation of this IO
+  // I believe the reason is: as it is based on flatmap, it takes in forever(io) in arguements and 
+  // compute it eagerly to get the IO (compute the function forever not the IO itself)
   def forever_v3[A](io: IO[A]): IO[A] = io *> forever(io)
 
   // inbuilt method from cats effect
