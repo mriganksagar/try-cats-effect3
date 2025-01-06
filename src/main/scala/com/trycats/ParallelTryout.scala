@@ -30,6 +30,11 @@ object ParallelTryout {
 
         // this won't compile, due to unavailability of Semigroupal instance for Left so we need to specify either
         // val tupledError4 = (error1, error2).tupled
+
+        // try couple of more combinations
+        // this will work because due to error3 it knows the context is Either
+        val tupledError4 = (error1, error3).tupled
+        println(tupledError4)
     }
 
     def parallelUsage: Unit = {
