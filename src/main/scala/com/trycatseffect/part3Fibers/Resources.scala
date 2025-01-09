@@ -11,6 +11,9 @@ import scala.concurrent.duration.*
 import com.trycatseffect.part3Fibers.BracketsExercise.openFileScanner
 import com.trycatseffect.part3Fibers.BracketsPattern.Connection
 import cats.effect.kernel.Resource
+import cats.effect.kernel.Outcome.Succeeded
+import cats.effect.kernel.Outcome.Canceled
+import cats.effect.kernel.Outcome.Errored
 
 object BracketsPattern extends IOApp.Simple {
 
@@ -159,5 +162,15 @@ object Resources extends IOApp.Simple {
         fib <- openConnection.start
         _ <- IO.sleep(100.milli) >> fib.cancel
     } yield ()
+
+
+    //// Finalisers 
+    val ioWithFinaliser = IO(s"Getting hold of a resource").ownDebug.guarantee( IO("Free resource").ownDebug.void )
+
+    val ioWithFinaliser2 = IO(s"Getting resource 2").ownDebug.guaranteeCase{
+        case Succeeded(fa) => fa.flatMap{v => IO(s"succeeded with value $v").ownDebug.void}
+        case Canceled() => IO("Resource got cancelled , and releasing").ownDebug.void
+        case Errored(e) => IO(s"Nothing to release, an error occured ${e.getMessage()} while acquiring resource").ownDebug.void
+    }
     override def run: IO[Unit] = openConnectionCancel
 }
