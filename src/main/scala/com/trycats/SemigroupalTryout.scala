@@ -61,7 +61,8 @@ object SemigroupalTryout {
             age: Int,
             favouriteFood: List[String]
         )
-     
+        
+        // with imapN method we can create a monoid instance for case classes
         given cattyMonoid: Monoid[Catty] = (
             Monoid[String],
             Monoid[Int],
@@ -70,11 +71,10 @@ object SemigroupalTryout {
 
         val catty1 = Catty("alok", 40, List("chicken", "mutton"))
         val catty2 = Catty("aditya", 35, List("fish", "mutton"))
+        val catty3 = Catty("suraj", 36, List("aaloo", "chaval"))
+        val catty4 = catty1 |+| catty2
 
-        val catty3 = catty1 |+| catty2
-
-        println(catty3)
-
+        println(catty4)
     }
 
     // Semigroupal Applied to Monads

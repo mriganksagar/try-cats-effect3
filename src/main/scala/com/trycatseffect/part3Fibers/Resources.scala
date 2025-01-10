@@ -4,16 +4,13 @@ import cats.effect.IO
 import cats.effect.IOApp
 import com.trycatseffect.utils.ownDebug
 
-import java.io.File
-import java.io.FileReader
+import java.io.{File, FileReader}
 import java.util.Scanner
 import scala.concurrent.duration.*
 import com.trycatseffect.part3Fibers.BracketsExercise.openFileScanner
 import com.trycatseffect.part3Fibers.BracketsPattern.Connection
 import cats.effect.kernel.Resource
-import cats.effect.kernel.Outcome.Succeeded
-import cats.effect.kernel.Outcome.Canceled
-import cats.effect.kernel.Outcome.Errored
+import cats.effect.kernel.Outcome.{ Succeeded, Canceled, Errored }
 
 object BracketsPattern extends IOApp.Simple {
 
