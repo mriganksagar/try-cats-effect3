@@ -87,7 +87,7 @@ object CancellingIOs extends IOApp.Simple{
 
     val authProgram_partially_cancellable = for {
         fib <- authFlow_partially_cancellable.start
-        _ <- IO.sleep(1.second) >> fib.cancel // wont cancel at 3 seconds but at 1 second , it will
+        _ <- IO.sleep(1.second) >> IO("attempting cancel").ownDebug >> fib.cancel // wont cancel at 3 seconds but at 1 second , it will
     } yield ()
     override def run: IO[Unit] = authProgram_partially_cancellable
 }
