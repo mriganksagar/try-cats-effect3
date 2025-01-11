@@ -11,6 +11,7 @@ import cats.effect.{OutcomeIO, FiberIO}
 import cats.effect.kernel.Outcome.Succeeded
 import cats.effect.kernel.Outcome.Canceled
 import cats.effect.kernel.Outcome.Errored
+import com.trycatseffect.utils.ownDebug
 
 object RacingIO extends IOApp.Simple {
 
@@ -66,6 +67,10 @@ object RacingExercises extends IOApp.Simple {
             case Right(_)    => IO.raiseError(new Exception("couldn't run in time"))
         }
 
+    val oneEffect = IO.sleep(1.second) >> IO(42).ownDebug
+    val timedOutEfect = timeout(oneEffect, 0.5.second) // cancell oneEffect
+    val timedOutEfect_v2 = oneEffect.timeout(2.second) // same method but from Cats effect 
+
     // Exercise 2.
     // Implement a method to return losing effect from a race (using racepair)
 
@@ -73,38 +78,42 @@ object RacingExercises extends IOApp.Simple {
         IO.racePair(ioa, iob).flatMap {
             case Left((_, fibB)) =>
                 fibB.join.flatMap {
-                    case Succeeded(fa) => fa.flatMap(x => IO(Right(x)))
+                    case Succeeded(fa) => fa.map(x => Right(x))
                     case Canceled()    => IO.raiseError(new Exception("the io was cancelled"))
                     case Errored(e)    => IO.raiseError(e)
                 }
             case Right((fibA, _)) =>
                 fibA.join.flatMap {
-                    case Succeeded(fa) => fa.flatMap(x => IO(Left(x)))
+                    case Succeeded(fa) => fa.map(x => Left(x))
                     case Canceled()    => IO.raiseError(new Exception("the io was cancelled"))
                     case Errored(e)    => IO.raiseError(e)
                 }
         }
 
     // here I will use for comprehensions for better readability instead of flatmaps
+    // not much better though and another thing to notice is that I used fold on Outcome instead of case matching
     def unrace_v2[A, B](ioa: IO[A], iob: IO[B]): IO[Either[A, B]] =
         for {
             raceIOs <- IO.racePair(ioa, iob)
             result <- raceIOs match {
-                case Left((_, fibB))  => 
-                    fibB.join.flatMap( _.fold(
+                case Left((_, fibB)) =>
+                    fibB.join.flatMap(
+                      _.fold(
                         IO.raiseError(new Exception("the IO was cancelled")),
                         e => IO.raiseError(e),
-                        _.flatMap(x => IO(Right[A, B](x))))
+                        _.flatMap(x => IO(Right[A, B](x)))
+                      )
                     )
-                case Right((fibA, _)) => 
-                    fibA.join.flatMap( _.fold(
+                case Right((fibA, _)) =>
+                    fibA.join.flatMap(
+                      _.fold(
                         IO.raiseError(new Exception("the IO was cancelled")),
                         e => IO.raiseError(e),
-                        _.flatMap(x => IO(Left[A, B](x))))
+                        _.flatMap(x => IO(Left[A, B](x)))
+                      )
                     )
             }
         } yield result
-
 
     // Exercise 3.
     // Implement Race from Race pair
@@ -124,7 +133,38 @@ object RacingExercises extends IOApp.Simple {
                   _.flatMap(x => IO(Right[A, B](x)))
                 )
         }
-    override def run: IO[Unit] = ???
+
+    // rock the jvm implemented it in this way:
+    // if there is a cancellation from winning IO then return the second IO
+
+    def simpleRace_v2[A, B](ioa: IO[A], iob: IO[B]): IO[Either[A, B]] =
+        IO.racePair(ioa, iob).flatMap {
+            case Left(outA, fibB) =>
+                outA match {
+                    case Succeeded(a) => fibB.cancel >> a.map(Left(_))
+                    case Errored(e)   => IO.raiseError(e)
+                    case Canceled() =>
+                        fibB.join.flatMap {
+                            case Succeeded(b) => b.map(Right(_))
+                            case Errored(e)   => IO.raiseError(e)
+                            case Canceled() =>
+                                IO.raiseError(new RuntimeException(" Both computations failed"))
+                        }
+                }
+            case Right(fibA, outB) =>
+                outB match {
+                    case Succeeded(a) => fibA.cancel >> a.map(Right(_))
+                    case Errored(e)   => IO.raiseError(e)
+                    case Canceled() =>
+                        fibA.join.flatMap {
+                            case Succeeded(b) => b.map(Left(_))
+                            case Errored(e)   => IO.raiseError(e)
+                            case Canceled() =>
+                                IO.raiseError(new RuntimeException(" Both computations failed"))
+                        }
+                }
+        }
+    override def run: IO[Unit] = timedOutEfect_v2.void
 }
 
 // questions from my mind
