@@ -7,6 +7,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Try, Success}
 import java.lang.invoke.CallSite
 import com.trycatseffect.utils.ownDebug
+import scala.concurrent.duration._
 
 object AsyncIOs extends IOApp.Simple {
 
@@ -18,10 +19,12 @@ object AsyncIOs extends IOApp.Simple {
 
 
     def computeMeaningOfLife(): Int = {
+        println(s"[${Thread.currentThread().getName()}] starting the meaning of life on a thread pool")
         Thread.sleep(1000)
-        println(s"[${Thread.currentThread().getName()}] computing the meaning of life on a thread pool")
+        println(s"[${Thread.currentThread().getName()}] computing the  meaning of life on a thread pool")
         42
     }
+
     def computeMeaningOfLifeEither(): Either[Throwable, Int] = Try{
         computeMeaningOfLife()
     }.toEither
@@ -91,5 +94,24 @@ object AsyncIOs extends IOApp.Simple {
 
     val aNeverEndingIO = IO.async_(_=>())
     val aNeverEndingIO_v2 = IO.never
-    override def run: IO[Unit] = asyncIOMol_v4.ownDebug >> IO(threadPool.shutdown())
+
+    val asyncMolWithCancellation: IO[Int] = IO.async { cb =>
+        IO{
+            threadPool.execute{ () =>
+                cb(computeMeaningOfLifeEither())
+            }
+        }.as(Some(IO("Cancelled Moi async").ownDebug.void))
+    }
+
+    /* 
+        lets use the asyncMOI and try to cancel it within time
+        personally, i don't see good reason for return IO for cancelling side effect yet,
+        because we can't cancel threadpool execute, even if we cancel fiber and it runs canceling IO effect
+     */
+    val asyncMolWithCancellation_program = for {
+        fib <- asyncMolWithCancellation.start
+        _ <- IO.sleep(500.milli) >> IO("cancelling...").ownDebug >> fib.cancel
+    } yield ()
+
+    override def run: IO[Unit] = asyncMolWithCancellation_program >> IO(threadPool.shutdown())
 }
