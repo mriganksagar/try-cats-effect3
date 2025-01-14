@@ -4,8 +4,7 @@ import cats.effect.IOApp
 import cats.effect.IO
 import java.util.concurrent.Executors
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Try, Success}
-import java.lang.invoke.CallSite
+import scala.util.Try
 import com.trycatseffect.utils.ownDebug
 import scala.concurrent.duration._
 
@@ -21,7 +20,7 @@ object AsyncIOs extends IOApp.Simple {
     def computeMeaningOfLife(): Int = {
         println(s"[${Thread.currentThread().getName()}] starting the meaning of life on a thread pool")
         Thread.sleep(1000)
-        println(s"[${Thread.currentThread().getName()}] computing the  meaning of life on a thread pool")
+        println(s"[${Thread.currentThread().getName()}] computing the meaning of life on a thread pool")
         42
     }
 
@@ -52,14 +51,13 @@ object AsyncIOs extends IOApp.Simple {
       * make an asynchronous IO out of a computation and execution context
       */
 
-    def asyncToIO[A](computation: () =>  A)(ec: ExecutionContext): IO[A] = {
+    def asyncToIO[A](computation: () =>  A)(ec: ExecutionContext): IO[A] = 
         IO.async_{ cb =>
             ec.execute{ () =>
                 val result = Try{computation()}.toEither
                 cb(result)
             }
         }
-    }
 
     val asyncIOMol_v2: IO[Int] = asyncToIO(computeMeaningOfLife)(ec)
     
@@ -77,11 +75,17 @@ object AsyncIOs extends IOApp.Simple {
             future.onComplete{t => cb(t.toEither)}(ec)
         }
     }
-    
+
+    // because futures are always eagerly evaluated, hence better make it lazy    
     lazy val molFuture: Future[Int] = Future{computeMeaningOfLife()}(ec)
 
     val asyncIOMol_v3: IO[Int] = asyncIOFromFuture(molFuture)
 
+    /* 
+        the reason the fromFuture takes in IO of Future and not future itself,
+        is to delay future execution instead of making fut arg call by name and take future
+        as I  think, fut: IO[Future] is a better semantics than fut : => Future
+     */ 
     val asyncIOMol_v4: IO[Int] = IO.fromFuture(IO(molFuture))
 
     /* 
@@ -95,6 +99,15 @@ object AsyncIOs extends IOApp.Simple {
     val aNeverEndingIO = IO.async_(_=>())
     val aNeverEndingIO_v2 = IO.never
 
+    /* 
+        The IO.async is different from IO.async_
+        How:
+            IO.async_ is simpler from IO.async
+            as it gives us a callback Either[Throwable, A] => Unit and we can simply use it to return result
+            but IO.async asks us a function Either[Throwable, A] => Unit => IO[Option[IO, Unit]] 
+            inside that IO we can execute code on another thread pool and return its result using the callback
+            but that IO itself has to optionally return an IO that can be run on cancellation
+     */
     val asyncMolWithCancellation: IO[Int] = IO.async { cb =>
         IO{
             threadPool.execute{ () =>
