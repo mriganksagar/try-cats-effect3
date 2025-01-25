@@ -2,7 +2,7 @@ package com.trycatseffect.part3Fibers
 
 import cats.effect.IOApp
 import cats.effect.IO
-import com.trycatseffect.utils.ownDebug
+import com.trycatseffect.utils.bebug
 import cats.effect.kernel.Outcome.{Succeeded, Canceled, Errored}
 import scala.concurrent.duration._
 
@@ -12,8 +12,8 @@ object Fibers {
     
     // How to create a fiber
     val aFiber = for {
-        fib <- meaningOfLife.ownDebug.start // create a fiber
-        fib2 <- favLanguage.ownDebug.start
+        fib <- meaningOfLife.bebug.start // create a fiber
+        fib2 <- favLanguage.bebug.start
         result <- fib.join // join a fiber or wait till its completion, It is an IO itself
         _ <- fib2.cancel // cancel a fiber, an IO that cancels fiber
     } yield result
@@ -40,7 +40,7 @@ object FibersExercise extends IOApp.Simple{
     }
 
     def testProcessResultsFromFiber() = {
-        val anIO = IO("starting").ownDebug >> IO.sleep(1.second) >> IO("done").ownDebug >> IO(42).ownDebug
+        val anIO = IO("starting").bebug >> IO.sleep(1.second) >> IO("done").bebug >> IO(42).bebug
         processResultsFromFiber(anIO).void
     }
     // Exercise 2. Write a function that takes Two IOs ioa and iob, 
@@ -68,9 +68,9 @@ object FibersExercise extends IOApp.Simple{
     }
 
     def testTupleIOs() = {
-        val firstIO = IO.sleep(1.second) >> IO(1).ownDebug
-        val secondIO = IO.sleep(500.milli) >> IO(2).ownDebug
-        tupleIOs(firstIO, secondIO).ownDebug.void
+        val firstIO = IO.sleep(1.second) >> IO(1).bebug
+        val secondIO = IO.sleep(500.milli) >> IO(2).bebug
+        tupleIOs(firstIO, secondIO).bebug.void
     }
     // Exercise 3. Write a function that adds a timeout to an IO
     // returns IO if succeed before timeout

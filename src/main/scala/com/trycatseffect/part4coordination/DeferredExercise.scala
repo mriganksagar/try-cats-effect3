@@ -21,14 +21,14 @@ object DeferredExercise extends IOApp.Simple{
     def alarmClock(): IO[Unit] = {
         def ticker(ticks: Ref[IO, Int], signal: Deferred[IO, Boolean]): IO[Unit] = 
             for {
-                _ <- IO("tick").ownDebug
+                _ <- IO("tick").bebug
                 _ <- IO.sleep(1.second)
                 newTicks <- ticks.updateAndGet(_+1)
                 _ <- if newTicks == 10 then signal.complete(true) else ticker(ticks, signal)
             } yield ()
 
 
-        def alarm(signal: Deferred[IO, Boolean]): IO[String] = IO(s"alarm is set").ownDebug >> signal.get >> IO(s"Subah ho gyi mamu").ownDebug
+        def alarm(signal: Deferred[IO, Boolean]): IO[String] = IO(s"alarm is set").bebug >> signal.get >> IO(s"Subah ho gyi mamu").bebug
 
         // program
         for {

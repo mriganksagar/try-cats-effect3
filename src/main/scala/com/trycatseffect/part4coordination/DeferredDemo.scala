@@ -1,7 +1,7 @@
 package com.trycatseffect.part4coordination
 
 import cats.effect.{IO, IOApp, Ref, Deferred}
-import com.trycatseffect.utils.ownDebug
+import com.trycatseffect.utils.bebug
 import scala.concurrent.duration.*
 
 object DeferredDemo extends IOApp.Simple {
@@ -30,16 +30,16 @@ object DeferredDemo extends IOApp.Simple {
     def demoDefersProducerConsumer(): IO[Unit] = {
 
         def consumer(signal: Deferred[IO, Int]) = for {
-            _ <- IO(s"[Consumer]: Waiting for the result").ownDebug
+            _ <- IO(s"[Consumer]: Waiting for the result").bebug
             value <- signal.get
-            _ <- IO(s"[Consumer]: got the result $value").ownDebug
+            _ <- IO(s"[Consumer]: got the result $value").bebug
         } yield ()
 
         def producer(signal: Deferred[IO, Int]): IO[Unit] = for {
-            _ <- IO(s"[Producer]: computing result").ownDebug
+            _ <- IO(s"[Producer]: computing result").bebug
             _ <- IO.sleep(2.second)
             value <- signal.complete(42)
-            _ <- IO(s"[Producer]: sent the result $value").ownDebug
+            _ <- IO(s"[Producer]: sent the result $value").bebug
         } yield ()
 
         for {
@@ -75,7 +75,7 @@ object DeferredDemo extends IOApp.Simple {
     def fileNotifierWithRef(): IO[Unit] = {
 
         def downloader(contentRef: Ref[IO, String]) = payload.traverse { data =>
-            IO.sleep(1.second) >> IO(s"[Downloader] downloaded $data").ownDebug
+            IO.sleep(1.second) >> IO(s"[Downloader] downloaded $data").bebug
                 >> contentRef.update(_ + data)
         }.void
 
@@ -83,9 +83,9 @@ object DeferredDemo extends IOApp.Simple {
             for {
                 part <- contentRef.get
                 _ <-
-                    if part.endsWith("<EOL>") then IO(s"[Notifier] downloading completed").ownDebug
+                    if part.endsWith("<EOL>") then IO(s"[Notifier] downloading completed").bebug
                     else
-                        IO(s"[Notifier] downloading...").ownDebug >> IO.sleep(
+                        IO(s"[Notifier] downloading...").bebug >> IO.sleep(
                           0.5.second
                         ) >> notifier(contentRef)
             } yield ()
@@ -109,16 +109,16 @@ object DeferredDemo extends IOApp.Simple {
 
         def notifier(signal: Deferred[IO, Boolean]): IO[Unit] =
             for {
-                _ <- IO(s"[Notifier]: Downloading file...").ownDebug
+                _ <- IO(s"[Notifier]: Downloading file...").bebug
                 isCompleted <- signal.get
-                _ <- if isCompleted then IO(s"[Notifier]: Downloaded file successfuly").ownDebug else IO(s"[Notifier]: Download failed").ownDebug
+                _ <- if isCompleted then IO(s"[Notifier]: Downloaded file successfuly").bebug else IO(s"[Notifier]: Download failed").bebug
             } yield ()
 
 
         def downloadChunk(chunk: String, contentRef: Ref[IO, String], signal: Deferred[IO, Boolean]): IO[Unit] = 
             for {
                 _ <- IO.sleep(1.second)
-                _ <- IO(s"[Downloader]: downloader recieved $chunk").ownDebug
+                _ <- IO(s"[Downloader]: downloader recieved $chunk").bebug
                 latest_content <- contentRef.updateAndGet(_+chunk)
                 _ <- if chunk.contains("<EOL>") then signal.complete(true) else IO.unit
             } yield ()

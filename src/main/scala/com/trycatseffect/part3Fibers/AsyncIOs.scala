@@ -5,7 +5,7 @@ import cats.effect.IO
 import java.util.concurrent.Executors
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
-import com.trycatseffect.utils.ownDebug
+import com.trycatseffect.utils.bebug
 import scala.concurrent.duration._
 
 object AsyncIOs extends IOApp.Simple {
@@ -113,7 +113,7 @@ object AsyncIOs extends IOApp.Simple {
             threadPool.execute{ () =>
                 cb(computeMeaningOfLifeEither())
             }
-        }.as(Some(IO("Cancelled Moi async").ownDebug.void))
+        }.as(Some(IO("Cancelled Moi async").bebug.void))
     }
 
     /* 
@@ -123,7 +123,7 @@ object AsyncIOs extends IOApp.Simple {
      */
     val asyncMolWithCancellation_program = for {
         fib <- asyncMolWithCancellation.start
-        _ <- IO.sleep(500.milli) >> IO("cancelling...").ownDebug >> fib.cancel
+        _ <- IO.sleep(500.milli) >> IO("cancelling...").bebug >> fib.cancel
     } yield ()
 
     override def run: IO[Unit] = asyncMolWithCancellation_program >> IO(threadPool.shutdown())

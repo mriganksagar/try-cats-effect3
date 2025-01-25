@@ -2,7 +2,7 @@ package com.trycatseffect.part3Fibers
 
 import cats.effect.IOApp
 import cats.effect.IO
-import com.trycatseffect.utils.ownDebug
+import com.trycatseffect.utils.bebug
 import scala.concurrent.duration._
 
 object CancellingIOs extends IOApp.Simple{
@@ -15,14 +15,14 @@ object CancellingIOs extends IOApp.Simple{
      */
 
     // Anything composed after canceled will not be evaluated 
-    val chainOfIOs = IO("waiting").ownDebug >> IO.canceled >> IO(42).ownDebug
+    val chainOfIOs = IO("waiting").bebug >> IO.canceled >> IO(42).bebug
 
     // lets create an IO with oncancel
     val onePayment = (
-        IO("Payment running, don't cancel it.").ownDebug >>
+        IO("Payment running, don't cancel it.").bebug >>
         IO.sleep(1.second) >>
-        IO("Payment completed.").ownDebug
-    ).onCancel(IO("How Dare you cancel?").ownDebug.void)
+        IO("Payment completed.").bebug
+    ).onCancel(IO("How Dare you cancel?").bebug.void)
 
     val readyForDoom = for {
         fib <- onePayment.start
@@ -37,7 +37,7 @@ object CancellingIOs extends IOApp.Simple{
 
     val canNotDoom = for {
         fib <- atomicPayment.start
-        _ <- IO.sleep(0.5.second) >> IO("attempt to cancel").ownDebug >>fib.cancel
+        _ <- IO.sleep(0.5.second) >> IO("attempt to cancel").bebug >>fib.cancel
     }  yield ()
 
     /* 
@@ -53,15 +53,15 @@ object CancellingIOs extends IOApp.Simple{
         - later we use a login flow and a program to try to cancel the flow
      */
 
-    val getUserData: IO[String] = IO("Getting user data").ownDebug >> IO.sleep(2.second) >> IO("data input completed").ownDebug >> IO("I am Batman")
-    val validateUserData = (data: String) => IO("Verifying User Data").ownDebug >> IO.sleep(2.second) >> IO("Done verifying").ownDebug >>IO(data == "I am Batman")
+    val getUserData: IO[String] = IO("Getting user data").bebug >> IO.sleep(2.second) >> IO("data input completed").bebug >> IO("I am Batman")
+    val validateUserData = (data: String) => IO("Verifying User Data").bebug >> IO.sleep(2.second) >> IO("Done verifying").bebug >>IO(data == "I am Batman")
 
     // Lets create an IO that has flow of input and validate, and wrap it in uncancellable
     val authFlow = IO.uncancelable{ poll =>
         for {
-            data <- getUserData.onCancel(IO("Authentication service timed out").ownDebug.void)
+            data <- getUserData.onCancel(IO("Authentication service timed out").bebug.void)
             isVerified <- validateUserData(data)
-            _ <- if isVerified then IO("Authentication Successful").ownDebug else IO("Authentication Failed").ownDebug
+            _ <- if isVerified then IO("Authentication Successful").bebug else IO("Authentication Failed").bebug
         }yield ()
     }
 
@@ -79,15 +79,15 @@ object CancellingIOs extends IOApp.Simple{
 
     val authFlow_partially_cancellable = IO.uncancelable{ poll =>
         for {
-            data <- poll(getUserData.onCancel(IO("Authentication service timed out").ownDebug.void))
+            data <- poll(getUserData.onCancel(IO("Authentication service timed out").bebug.void))
             isVerified <- validateUserData(data)
-            _ <- if isVerified then IO("Authentication Successful").ownDebug else IO("Authentication Failed").ownDebug
+            _ <- if isVerified then IO("Authentication Successful").bebug else IO("Authentication Failed").bebug
         }yield ()
     }   
 
     val authProgram_partially_cancellable = for {
         fib <- authFlow_partially_cancellable.start
-        _ <- IO.sleep(1.second) >> IO("attempting cancel").ownDebug >> fib.cancel // wont cancel at 3 seconds but at 1 second , it will
+        _ <- IO.sleep(1.second) >> IO("attempting cancel").bebug >> fib.cancel // wont cancel at 3 seconds but at 1 second , it will
     } yield ()
     override def run: IO[Unit] = authProgram_partially_cancellable
 }

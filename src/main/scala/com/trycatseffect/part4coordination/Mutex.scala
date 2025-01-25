@@ -4,7 +4,7 @@ import cats.effect.{IO, IOApp, Deferred, Ref}
 import scala.collection.immutable.Queue
 import scala.concurrent.duration.*
 import scala.util.Random
-import com.trycatseffect.utils.ownDebug
+import com.trycatseffect.utils.bebug
 import cats.effect.kernel.Outcome.Succeeded
 import cats.effect.kernel.Outcome.Errored
 import cats.effect.kernel.Outcome.Canceled
@@ -97,13 +97,13 @@ object MutexPlayground extends IOApp.Simple {
      */
     def lockingTask(id: Int, mutex: Mutex): IO[Int] =
         for {
-            _ <- IO(s"[task $id] starting ...").ownDebug
-            _ <- IO(s"[task $id] waiting to acquire lock").ownDebug
+            _ <- IO(s"[task $id] starting ...").bebug
+            _ <- IO(s"[task $id] waiting to acquire lock").bebug
             _ <- mutex.acquire
             // critical section
             res <- criticalTask.guarantee(mutex.release)
-            _ <- IO(s"[task $id] releasing lock").ownDebug
-            _ <- IO(s"[task $id] got result $res").ownDebug
+            _ <- IO(s"[task $id] releasing lock").bebug
+            _ <- IO(s"[task $id] got result $res").bebug
         } yield res
 
     def demoLockingTasks: IO[List[Int]] = for {
@@ -114,7 +114,7 @@ object MutexPlayground extends IOApp.Simple {
     def cancelableLockingTask(id: Int, mutex: Mutex): IO[Int] =
         if id%2 == 0 then lockingTask(id, mutex)
         else for {
-            fib <- lockingTask(id, mutex).onCancel(IO(s"[Task Id: $id] cancelling task").ownDebug.void).start
+            fib <- lockingTask(id, mutex).onCancel(IO(s"[Task Id: $id] cancelling task").bebug.void).start
             _ <- IO.sleep(1.second) >> fib.cancel
             out <- fib.join
             result <- out match {

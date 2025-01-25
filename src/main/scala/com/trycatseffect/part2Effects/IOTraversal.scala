@@ -4,7 +4,7 @@ import cats.effect.IOApp
 import cats.effect.IO
 import cats.Traverse
 import scala.util.Random
-import com.trycatseffect.utils.ownDebug
+import com.trycatseffect.utils.bebug
 import cats.Parallel
 
 object IOTraversal extends IOApp.Simple{
@@ -18,24 +18,24 @@ object IOTraversal extends IOApp.Simple{
 
 
     def showcaseIOofList = {
-        Traverse[List].traverse(movies)(computeAsIO.andThen(ownDebug))
+        Traverse[List].traverse(movies)(computeAsIO.andThen(bebug))
     }
     
     def showcaseIOofListParallely = {
-        Parallel.parTraverse(movies)(computeAsIO.andThen(ownDebug))
+        Parallel.parTraverse(movies)(computeAsIO.andThen(bebug))
     }
 
     // Here in Below methods, I will use extension methods / implicit classes instead of Object Parallel or Traverse
     def showcaseIOofList_v2 = {
         import cats.syntax.traverse._
 
-        movies.traverse(computeAsIO.andThen(ownDebug))
+        movies.traverse(computeAsIO.andThen(bebug))
     }
 
     def showcaseIOofListParallely_v2 = {
         import cats.syntax.parallel._
 
-        movies.parTraverse(computeAsIO.andThen(ownDebug))
+        movies.parTraverse(computeAsIO.andThen(bebug))
     }
 
     override def run: IO[Unit] = showcaseIOofList_v2.void

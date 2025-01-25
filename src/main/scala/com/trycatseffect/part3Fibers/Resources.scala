@@ -2,7 +2,7 @@ package com.trycatseffect.part3Fibers
 
 import cats.effect.IO
 import cats.effect.IOApp
-import com.trycatseffect.utils.ownDebug
+import com.trycatseffect.utils.bebug
 
 import java.io.{File, FileReader}
 import java.util.Scanner
@@ -17,8 +17,8 @@ object BracketsPattern extends IOApp.Simple {
     // use case manage a connection lifecycle
 
     class Connection(url: String) {
-        def open: IO[String] = IO(s"opening connection to $url").ownDebug
-        def close: IO[String] = IO(s"closing connection to $url").ownDebug
+        def open: IO[String] = IO(s"opening connection to $url").bebug
+        def close: IO[String] = IO(s"closing connection to $url").bebug
     }
 
     val asyncFetchUrl = for {
@@ -71,7 +71,7 @@ object BracketsExercise extends IOApp.Simple {
             openFileScanner(path).bracket { scanner =>
                 def readLineByLine: IO[Unit] =
                     if scanner.hasNextLine() then
-                        IO(scanner.nextLine()).ownDebug >> IO.sleep(
+                        IO(scanner.nextLine()).bebug >> IO.sleep(
                           100.milli
                         ) >> readLineByLine
                     else IO.unit
@@ -92,7 +92,7 @@ object Resources extends IOApp.Simple {
             IO(new Connection(scanner.nextLine())).bracket { conn =>
                 conn.open >> IO.never
             }(conn => conn.close.void)
-        }(scanner => IO("closing file").ownDebug >> IO(scanner.close()))
+        }(scanner => IO("closing file").bebug >> IO(scanner.close()))
     }
 
     // there is a better abstraction "Resource" over brackets pattern
@@ -108,12 +108,12 @@ object Resources extends IOApp.Simple {
 
     def resourceReadFile(path: String): IO[Unit] = {
         val resourceFile = Resource.make(openFileScanner(path))(scanner =>
-            IO(s"closing file at $path").ownDebug *> IO(scanner.close())
+            IO(s"closing file at $path").bebug *> IO(scanner.close())
         )
 
-        IO(s"opening file at $path").ownDebug >> resourceFile.use { scanner =>
+        IO(s"opening file at $path").bebug >> resourceFile.use { scanner =>
             def readLine: IO[Unit] = if scanner.hasNextLine() then
-                IO(scanner.nextLine()).ownDebug >> IO.sleep(
+                IO(scanner.nextLine()).bebug >> IO.sleep(
                   100.milli
                 ) >> readLine
             else IO.unit
@@ -127,7 +127,7 @@ object Resources extends IOApp.Simple {
             fib <- resourceReadFile(path).start // will start fiber that reads file at path
             _ <- IO.sleep(200.milli) >> IO(
               "cancelling fiber"
-            ).ownDebug >> fib.cancel // cancel fiber after 200 milli seconds
+            ).bebug >> fib.cancel // cancel fiber after 200 milli seconds
         } yield ()
     }
 
@@ -135,8 +135,8 @@ object Resources extends IOApp.Simple {
 
     def connFromConfResource(path: String) =
         Resource
-            .make(IO(s"opening file at $path").ownDebug >> openFileScanner(path))(scanner =>
-                IO(s"closing file at $path").ownDebug *> IO(scanner.close())
+            .make(IO(s"opening file at $path").bebug >> openFileScanner(path))(scanner =>
+                IO(s"closing file at $path").bebug *> IO(scanner.close())
             )
             .flatMap { scanner =>
                 Resource.make(IO(Connection(scanner.nextLine())))(conn => conn.close.void)
@@ -145,9 +145,9 @@ object Resources extends IOApp.Simple {
     def connFromConfResourceClean(path: String) =
         for {
             scanner <- Resource.make(
-              IO(s"opening file at $path").ownDebug >> openFileScanner(path)
+              IO(s"opening file at $path").bebug >> openFileScanner(path)
             ) { scanner =>
-                IO(s"closing file at $path").ownDebug *> IO(scanner.close())
+                IO(s"closing file at $path").bebug *> IO(scanner.close())
             }
             conn <- Resource.make(IO(Connection(scanner.nextLine())))(conn => conn.close.void)
         } yield conn
@@ -162,12 +162,12 @@ object Resources extends IOApp.Simple {
 
 
     //// Finalisers 
-    val ioWithFinaliser = IO(s"Getting hold of a resource").ownDebug.guarantee( IO("Free resource").ownDebug.void )
+    val ioWithFinaliser = IO(s"Getting hold of a resource").bebug.guarantee( IO("Free resource").bebug.void )
 
-    val ioWithFinaliser2 = IO(s"Getting resource 2").ownDebug.guaranteeCase{
-        case Succeeded(fa) => fa.flatMap{v => IO(s"succeeded with value $v").ownDebug.void}
-        case Canceled() => IO("Resource got cancelled , and releasing").ownDebug.void
-        case Errored(e) => IO(s"Nothing to release, an error occured ${e.getMessage()} while acquiring resource").ownDebug.void
+    val ioWithFinaliser2 = IO(s"Getting resource 2").bebug.guaranteeCase{
+        case Succeeded(fa) => fa.flatMap{v => IO(s"succeeded with value $v").bebug.void}
+        case Canceled() => IO("Resource got cancelled , and releasing").bebug.void
+        case Errored(e) => IO(s"Nothing to release, an error occured ${e.getMessage()} while acquiring resource").bebug.void
     }
     override def run: IO[Unit] = openConnectionCancel
 }

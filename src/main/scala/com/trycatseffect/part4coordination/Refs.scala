@@ -2,7 +2,7 @@ package com.trycatseffect.part4coordination
 
 import cats.effect.{IO, IOApp, Ref}
 
-import com.trycatseffect.utils.ownDebug
+import com.trycatseffect.utils.bebug
 object Refs extends IOApp.Simple {
 
     /*
@@ -50,9 +50,9 @@ object Refs extends IOApp.Simple {
         def task(workload: String): IO[Unit] = {
             val wordcount = workload.split(" ").length
             for {
-                _ <- IO(s"counting words for '$workload' : $wordcount").ownDebug
+                _ <- IO(s"counting words for '$workload' : $wordcount").bebug
                 newCount = count + wordcount
-                _ <- IO(s"new total words count: $newCount").ownDebug
+                _ <- IO(s"new total words count: $newCount").bebug
                 _ = count = newCount
             } yield ()
         }
@@ -73,9 +73,9 @@ object Refs extends IOApp.Simple {
         def task(counter: Ref[IO, Int])(workload: String) = {
             val wordcount = workload.split(" ").length
             for {
-                _ <- IO(s"counting words for '$workload' : $wordcount").ownDebug
+                _ <- IO(s"counting words for '$workload' : $wordcount").bebug
                 newCount <- counter.updateAndGet(_ + wordcount)
-                _ <- IO(s"new total words count: $newCount").ownDebug
+                _ <- IO(s"new total words count: $newCount").bebug
             } yield ()
         }
 
@@ -89,7 +89,7 @@ object Refs extends IOApp.Simple {
             counter <- IO.ref(0)
             _ <- titles.map(task(counter)).parSequence
             finalCount <- counter.get
-            _ <- IO(s"the final count is $finalCount").ownDebug
+            _ <- IO(s"the final count is $finalCount").bebug
         } yield ()
     }
     override def run: IO[Unit] = demoConcurrentWorkWithAtomic
@@ -121,7 +121,7 @@ object RefsExercise extends IOApp.Simple {
             _ <- {
                 val tickingProgram = (IO.sleep(1.second) >> tick.update(_ + 1)).foreverM
                 val printingProgram = (IO.sleep(5.second) >> tick.get.flatMap(currentTicks =>
-                    IO(s"Ticks: $currentTicks").ownDebug
+                    IO(s"Ticks: $currentTicks").bebug
                 )).foreverM
 
                 (tickingProgram, printingProgram).parTupled

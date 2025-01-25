@@ -18,8 +18,8 @@ object BlockingIOs extends IOApp.Simple{
         that's why after a sleep next effects might run on different threads on the pool (but not necessarily)
      */
     val someSleeps = for {
-        _ <- IO.sleep(1.second).ownDebug // SEMANTIC BLOCKING
-        _ <- IO.sleep(1.second).ownDebug
+        _ <- IO.sleep(1.second).bebug // SEMANTIC BLOCKING
+        _ <- IO.sleep(1.second).bebug
     } yield ()
 
     /* 
@@ -45,14 +45,14 @@ object BlockingIOs extends IOApp.Simple{
      */
 
     val iosOnManyThreads = for {
-        _ <- IO("first").ownDebug
+        _ <- IO("first").bebug
         _ <- IO.cede
-        _ <- IO("second").ownDebug
+        _ <- IO("second").bebug
         _ <- IO.cede
-        _ <- IO("third").ownDebug
+        _ <- IO("third").bebug
     } yield ()
 
-    val aThousandCedes = (1 to 1000).map(IO.pure(_).ownDebug).reduce(_ >> IO.cede >> _)
+    val aThousandCedes = (1 to 1000).map(IO.pure(_).bebug).reduce(_ >> IO.cede >> _)
 
     def testThousandCedesOnCustomThreadPool = {
         val ec: ExecutionContext = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(8))

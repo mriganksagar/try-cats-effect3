@@ -9,7 +9,7 @@ import cats.effect.{OutcomeIO, FiberIO}
 import cats.effect.kernel.Outcome.Succeeded
 import cats.effect.kernel.Outcome.Canceled
 import cats.effect.kernel.Outcome.Errored
-import com.trycatseffect.utils.ownDebug
+import com.trycatseffect.utils.bebug
 
 object RacingIO extends IOApp.Simple {
 
@@ -17,11 +17,11 @@ object RacingIO extends IOApp.Simple {
 
     def runWithSleep[A](value: A, duration: FiniteDuration): IO[A] = {
         (
-          IO("starting computation").ownDebug >>
+          IO("starting computation").bebug >>
               IO.sleep(duration) >>
-              IO(s"computation done for value $value").ownDebug >>
+              IO(s"computation done for value $value").bebug >>
               IO(value)
-        ).onCancel(IO(s"computation cancelled for value $value").ownDebug.void)
+        ).onCancel(IO(s"computation cancelled for value $value").bebug.void)
     }
 
     // some IOs with sleep
@@ -32,8 +32,8 @@ object RacingIO extends IOApp.Simple {
         val racedIOs: IO[Either[Int, String]] = IO.race(meaningOfLife, favLanguage)
 
         racedIOs.flatMap {
-            case Left(value)  => IO("meaning of life won").ownDebug
-            case Right(value) => IO("fav language won").ownDebug
+            case Left(value)  => IO("meaning of life won").bebug
+            case Right(value) => IO("fav language won").bebug
         }
     }
 
@@ -45,9 +45,9 @@ object RacingIO extends IOApp.Simple {
 
         racedPairIO.flatMap {
             case Left((outMol, fibLang)) =>
-                fibLang.cancel >> IO("meaning of life won").ownDebug >> IO(outMol).ownDebug
+                fibLang.cancel >> IO("meaning of life won").bebug >> IO(outMol).bebug
             case Right((fibMol, outLang)) =>
-                fibMol.cancel >> IO("fav lang won").ownDebug >> IO(outLang).ownDebug
+                fibMol.cancel >> IO("fav lang won").bebug >> IO(outLang).bebug
         }
 
     }
@@ -65,7 +65,7 @@ object RacingExercises extends IOApp.Simple {
             case Right(_)    => IO.raiseError(new Exception("couldn't run in time"))
         }
 
-    val oneEffect = IO.sleep(1.second) >> IO(42).ownDebug
+    val oneEffect = IO.sleep(1.second) >> IO(42).bebug
     val timedOutEfect = timeout(oneEffect, 0.5.second) // cancell oneEffect
     val timedOutEfect_v2 = oneEffect.timeout(2.second) // same method but from Cats effect 
 

@@ -2,7 +2,7 @@ package com.trycatseffect.part3Fibers
 
 import cats.effect.IOApp
 import cats.effect.IO
-import com.trycatseffect.utils.ownDebug
+import com.trycatseffect.utils.bebug
 import scala.concurrent.duration._
 
 object CancellingIOsExercise extends IOApp.Simple{
@@ -14,7 +14,7 @@ object CancellingIOsExercise extends IOApp.Simple{
         Uncancellable with eliminate all cancel points except where Poll is used 
      */
 
-    val cancelBeforeMeaningOfLife = IO.canceled >> IO(42).ownDebug
+    val cancelBeforeMeaningOfLife = IO.canceled >> IO(42).bebug
     val uncancelableMeaningOfLife = IO.uncancelable(_ => cancelBeforeMeaningOfLife)
 
     /* 
@@ -26,7 +26,7 @@ object CancellingIOsExercise extends IOApp.Simple{
 
     val authProgram_invincible = for {
         fib <- authFlow_partially_cancellable.uncancelable.start
-        _ <- IO.sleep(1.second) >> IO("attempting cancel").ownDebug >> fib.cancel
+        _ <- IO.sleep(1.second) >> IO("attempting cancel").bebug >> fib.cancel
     } yield ()
 
     /*  
@@ -45,14 +45,14 @@ object CancellingIOsExercise extends IOApp.Simple{
     */
     def threeStepProgram = {
         val sequence = IO.uncancelable{ poll =>
-            poll( IO("cancellable 1").ownDebug >> IO.sleep(1.second) >> IO("cancelable end 1").ownDebug) >> 
-            IO("Uncancellable").ownDebug >> IO.sleep(1.second) >> IO("uncancelable end").ownDebug >>
-            poll(IO("cancellable 2").ownDebug >> IO.sleep(1.second) >> IO("cancelable 2 end").ownDebug)
+            poll( IO("cancellable 1").bebug >> IO.sleep(1.second) >> IO("cancelable end 1").bebug) >> 
+            IO("Uncancellable").bebug >> IO.sleep(1.second) >> IO("uncancelable end").bebug >>
+            poll(IO("cancellable 2").bebug >> IO.sleep(1.second) >> IO("cancelable 2 end").bebug)
         }
 
         for {
             fib <- sequence.start
-            _ <- IO.sleep(1.5.second) >> IO("attemptiong Cancelling").ownDebug >> fib.cancel
+            _ <- IO.sleep(1.5.second) >> IO("attemptiong Cancelling").bebug >> fib.cancel
         } yield ()
     }
     override def run: IO[Unit] = threeStepProgram
