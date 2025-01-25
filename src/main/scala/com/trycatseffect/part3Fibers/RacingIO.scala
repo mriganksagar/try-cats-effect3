@@ -2,9 +2,7 @@ package com.trycatseffect.part3Fibers
 
 import cats.effect.IOApp
 import cats.effect.IO
-import cats.instances.duration
 import scala.concurrent.duration._
-import com.trycatseffect.part2Effects.IOParallelism.favLanguage
 import cats.effect.kernel.Outcome
 
 import cats.effect.{OutcomeIO, FiberIO}

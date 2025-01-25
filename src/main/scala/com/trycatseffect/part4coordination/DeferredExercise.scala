@@ -15,13 +15,6 @@ object DeferredExercise extends IOApp.Simple{
 
         Solution: I used ticker and alarm programs ran both on fibers using ref for counter increments
         and deferred for signal
-
-        - one thing to notice, 
-        program didn't work fine with parallelSequence
-        but worked well with fibers
-
-        Key advice, don't use parSequence when tasks are dependent on each other
-        only use when need parallelism on independent tasks
      */
     import cats.syntax.parallel._ // for .parTraverse method
 
@@ -41,11 +34,13 @@ object DeferredExercise extends IOApp.Simple{
         for {
             ticks <- IO.ref(0)
             signal <- IO.deferred[Boolean]
-            // _ <- (ticker(ticks, signal), alarm(signal)).parSequence
-            fibTicker <- ticker(ticks, signal).start
-            fibAlarm <- alarm(signal).start
-            _ <- fibAlarm.join
-            _ <- fibTicker.join
+            _ <- List(ticker(ticks, signal), alarm(signal)).parSequence
+            
+            // upper line can be replaced by code below as well
+            // fibTicker <- ticker(ticks, signal).start
+            // fibAlarm <- alarm(signal).start
+            // _ <- fibAlarm.join
+            // _ <- fibTicker.join
         } yield ()
     }
 
