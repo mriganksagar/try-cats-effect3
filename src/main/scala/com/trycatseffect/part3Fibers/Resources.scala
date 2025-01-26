@@ -133,7 +133,7 @@ object Resources extends IOApp.Simple {
 
     // nested resources
 
-    def connFromConfResource(path: String) =
+    def connFromConfResource(path: String): Resource[IO, Connection] =
         Resource
             .make(IO(s"opening file at $path").bebug >> openFileScanner(path))(scanner =>
                 IO(s"closing file at $path").bebug *> IO(scanner.close())
