@@ -20,13 +20,13 @@ object MyCtLatch {
         def await: IO[Unit] = IO.uncancelable { poll =>
             for {
                 signal <- IO.deferred[Unit]
-                _ <- state.flatModify {
+                _ <- state.modify {
                     case s @ State(c, q) if c <= 0 => s -> IO.unit
                     case State(c, q) =>
                         State(c, q.enqueue(signal)) -> poll(signal.get).onCancel {
                             state.update { case State(c, q) => State(c, q.filterNot(_ == signal)) }
                         }
-                }
+                }.flatten
             } yield ()
         }
 
@@ -64,11 +64,12 @@ object CTLatch {
         }
 
         // release should not be cancellable, else it blocks awaiting fibers indefinitely
+        // flatModify is an uncancellable and flatten both
         def release: IO[Unit] = state.flatModify{
             case Done => Done -> IO.unit
             case Live(1, signal) => Done -> signal.complete(()).void
             case Live(n, signal) => Live(n-1, signal) -> IO.unit 
-        }.uncancelable
+        }
     }
 
     def apply(n: Int): IO[MyCtLatch] = for {
