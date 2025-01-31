@@ -91,7 +91,6 @@ object Mutex {
     def apply() = IO.ref(initialState).map(createMutexWithCancellation)
 }
 
-import cats.syntax.traverse._
 object MutexPlayground extends IOApp.Simple {
 
     def criticalTask: IO[Int] = IO.sleep(1.second) >> IO(Random.nextInt(100))

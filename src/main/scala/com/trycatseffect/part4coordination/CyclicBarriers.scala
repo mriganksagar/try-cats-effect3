@@ -14,6 +14,12 @@ trait CBarrier {
     def await: IO[Unit]
 }
 
+/* 
+    To give cancellation logic for awaiting threads,
+    we will have to write cleanup logic, 
+    but we need a mechanism to know whether a new deferred is put or not
+    so that we change counter only when needed i.e no new deferred (cycle)
+ */
 object CBarrier {
 
     case class State(waiting: Int, signal: Deferred[IO, Unit])
