@@ -7,7 +7,7 @@ ThisBuild / scalaVersion := "3.4.0"
 // See https://github.com/typelevel/sbt-tpolecat/?tab=readme-ov-file#modes
 ThisBuild / tpolecatDefaultOptionsMode := VerboseMode
 
-lazy val root = (project in file(".")).settings(
+lazy val `try-cats-effect3` = (project in file(".")).settings(
   name := "try-cats-effect3",
   libraryDependencies ++= Seq(
     // "core" module - IO, IOApp, schedulers
@@ -19,4 +19,3 @@ lazy val root = (project in file(".")).settings(
     "org.typelevel" %% "cats-effect-std" % "3.5.3",
     "org.typelevel" %% "munit-cats-effect" % "2.0.0" % Test)
 )
- 

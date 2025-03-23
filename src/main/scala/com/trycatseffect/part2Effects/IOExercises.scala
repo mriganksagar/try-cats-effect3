@@ -48,12 +48,18 @@ object IOExercises {
         if n <= 0 then 0
         else n + sum(n - 1)
 
+    def sumRec(n: Int): Long =
+      def help(_n: Int, acc: Long): Long = if _n == 0 then acc else help(_n-1, acc+_n)
+      help(n, 0)
+
     // even this simple recursive function causes stack to overflow in contrast to IO (with trampolining)
-    def sumIO(n: Int): IO[Int] =
+    def sumIO(n: Int): IO[Long] =
         if n <= 0 then IO(0) else sumIO(n - 1).map(value => value + n)
 
+    def sumIO_v0(n: Int): IO[Long] =
+      if n <= 0 then IO(0) else IO(n).flatMap(v => sumIO_v0(n-1).map(_+v))
     // this version uses flatmap as is stack safe due to a concept called trampolining (used in implementation of Cats)
-    def sumIO_v1(n: Int): IO[Int] =
+    def sumIO_v1(n: Int): IO[Long] =
         if n <= 0 then IO(0)
         else
             for {
@@ -92,10 +98,26 @@ object IOExercises {
         import cats.effect.unsafe.implicits.global
 
         def testSumIOs() = {
-            val sumIO_90000 = sumIO_v1(90000)
+            val sumIO_90000 = sumIO(1000000)
             println(sumIO_90000.unsafeRunSync())
         }
+
+        def testSumIOsV0() = {
+            val sumIO_90000 = sumIO_v0(1000000)
+            println(sumIO_90000.unsafeRunSync())
+        }
+
+        def testSumIOsV1() = {
+            val sumIO_90000 = sumIO_v1(1000000)
+            println(sumIO_90000.unsafeRunSync())
+        }
+
+        // below one cause stack overflow!
         // testSumIOs()
+        testSumIOsV0()
+        testSumIOsV1()
+
+        println(sumRec(1000000))
 
         def testFibonnaccis() = {
             (1 to 100) foreach { i =>
@@ -111,6 +133,6 @@ object IOExercises {
             }
         }
 
-        testFibonnaccis()
+        // testFibonnaccis()
     }
 }
